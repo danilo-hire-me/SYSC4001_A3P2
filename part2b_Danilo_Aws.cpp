@@ -182,38 +182,44 @@ void ta_process(int ta_id, SharedData* shm_ptr) {
         }
         
         // --- 2. Mark Exam Questions ---
-        int questions_remaining;
-        int marked_count = 0;
-        for(int i = 0; i < NUM_EXERCISES; ++i) {
-            if(shm_ptr->current_exam.marked_by_ta[i] == 1) marked_count++;
+        while (shm_ptr->is_terminated == 0) { // Keep the outer loop for the TA's life cycle
+
+    // --- RECALCULATE marked_count inside the loop to reflect other TAs' work ---
+    int marked_count = 0;
+    for(int i = 0; i < NUM_EXERCISES; ++i) {
+        if(shm_ptr->current_exam.marked_by_ta[i] == 1) {
+            marked_count++;
         }
-        questions_remaining = NUM_EXERCISES - marked_count;
+    }
+    int questions_remaining = NUM_EXERCISES - marked_count;
 
-        while (questions_remaining > 0 && shm_ptr->is_terminated == 0) {
-            
-            int q_idx = rand() % NUM_EXERCISES; 
-            int sem_num = Q1_MARK_SEM + q_idx; 
+    if (questions_remaining == 0) {
+        // Exam is finished by other TAs or this TA, break out to Step 3 (Load Next Exam)
+        break; 
+    }
+    
+    // --- Attempt to mark one question  ---
+    int q_idx = rand() % NUM_EXERCISES; 
+    int sem_num = Q1_MARK_SEM + q_idx; 
 
-            // Acquire the lock for this specific question
-            sem_wait(shm_ptr->sem_id, sem_num);
+    sem_wait(shm_ptr->sem_id, sem_num);
 
-            // --- CRITICAL SECTION START: Question Marking (Dedicated Mutex protected) ---
-            if (shm_ptr->current_exam.marked_by_ta[q_idx] == 0) {
-                
-                shm_ptr->current_exam.marked_by_ta[q_idx] = 1;
-                questions_remaining--;
+    // --- CRITICAL SECTION START: Question Marking ---
+    if (shm_ptr->current_exam.marked_by_ta[q_idx] == 0) {
+        
+        shm_ptr->current_exam.marked_by_ta[q_idx] = 1;
 
-                int delay_ms = 1000 + (rand() % 1001); 
-                cout << "TA " << ta_id << " -> Marking question " << (q_idx + 1)
-                     << " for student " << shm_ptr->current_exam.student_id
-                     << "... (Delay: " << delay_ms << "ms)" << endl;
-                usleep(delay_ms * 1000); 
-                
-                cout << "TA " << ta_id << " <- Finished marking question " << (q_idx + 1) 
-                     << " for student " << shm_ptr->current_exam.student_id << "." << endl;
-            } else {
-                 cout << "TA " << ta_id << " -> Question " << (q_idx + 1) << " already marked/claimed. Trying another." << endl;
-            }
+        int delay_ms = 1000 + (rand() % 1001); 
+        cout << "TA " << ta_id << " -> Marking question " << (q_idx + 1)
+             << " for student " << shm_ptr->current_exam.student_id
+             << "... (Delay: " << delay_ms << "ms)" << endl;
+        usleep(delay_ms * 1000); 
+        
+        cout << "TA " << ta_id << " <- Finished marking question " << (q_idx + 1) 
+             << " for student " << shm_ptr->current_exam.student_id << "." << endl;
+    } else {
+         cout << "TA " << ta_id << " -> Question " << (q_idx + 1) << " already marked/claimed. Trying another." << endl;
+    }
             // --- CRITICAL SECTION END ---
 
             sem_signal(shm_ptr->sem_id, sem_num);
@@ -257,7 +263,8 @@ int main(int argc, char* argv[]) {
         cerr << "Error: Number of TAs must be >= 2." << endl;
         return 1;
     }
-    
+    vector<pid_t> ta_pids;
+
     int shmid = -1;
     SharedData* shm_ptr = (SharedData*)-1;
     int semid = -1;
@@ -308,7 +315,7 @@ int main(int argc, char* argv[]) {
     cout << "Initial exam ID loaded: " << shm_ptr->current_exam.student_id << endl;
 
     // --- 4. Fork TA Processes ---
-    vector<pid_t> ta_pids;
+    
     for (int i = 1; i <= n_tas; ++i) {
         pid_t pid = fork();
         

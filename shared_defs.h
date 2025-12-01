@@ -13,18 +13,18 @@
  // semaphore indices
 
 enum{
-    RUBRIC_WRITE_SEM, // Index 0: Mutex to protect writing to the rubric file
-    EXAM_LOAD_SEM,    // Index 1: Mutex to protect loading the next exam into shared memory
-    Q1_MARK_SEM,      // Index 2: Mutex for marking Question 1
-    Q2_MARK_SEM,      // Index 3: Mutex for marking Question 2
-    Q3_MARK_SEM,      // Index 4: Mutex for marking Question 3
-    Q4_MARK_SEM,      // Index 5: Mutex for marking Question 4
-    Q5_MARK_SEM,      // Index 6: Mutex for marking Question 5
-    NUM_SEMAPHORES    // Total count: 7
+    RUBRIC_WRITE_SEM, 
+    EXAM_LOAD_SEM,    
+    Q1_MARK_SEM,      
+    Q2_MARK_SEM,      
+    Q3_MARK_SEM,      
+    Q4_MARK_SEM,      
+    Q5_MARK_SEM,      
+    NUM_SEMAPHORES    
 };
 
 // --- Rubric Structure ---
-// Represents one line in the rubric file (e.g., "1, A")
+// Represents one line in the rubric file
 typedef struct {
     int exercise_num;
     char rubric_text; // The character that can be corrected ('A', 'B', etc.)
@@ -32,7 +32,7 @@ typedef struct {
 
 // --- Exam Structure ---
 typedef struct {
-    int student_id; // e.g., 0001
+    int student_id; 
     // Flag to track which questions have been marked (0 = unmarked, 1 = marked)
     int marked_by_ta[NUM_EXERCISES]; 
 } ExamState;
@@ -44,11 +44,11 @@ typedef struct {
     RubricEntry current_rubric[NUM_EXERCISES];
     ExamState current_exam;
 
-    // Coordination Variables (Needed for Part 2.a/b)
-    int next_exam_index;      // Index/ID of the next exam file to load (e.g., 1 to 21)
-    int ta_count;             // Total number of TAs (processes) created
-    int is_terminated;        // Flag to signal all TAs to stop (e.g., when 9999 is reached)
+    // Coordination Variables 
+    int next_exam_index;      
+    int ta_count;             
+    int is_terminated;        
     int sem_id; 
 } SharedData;
 
-#endif // SHARED_DEFS_H
+#endif

@@ -29,9 +29,9 @@ int read_student_id(const string& filename) {
     return -1;
 }
 
-// ------------------------------------------------------------------
+
 // FILE/SHM I/O FUNCTIONS
-// ------------------------------------------------------------------
+
 
 // Loads the initial rubric from file into shared memory
 void load_rubric_to_shm(SharedData* shm_ptr) {
@@ -124,9 +124,9 @@ int load_next_exam_to_shm(SharedData* shm_ptr, int ta_id) {
     return 1;
 }
 
-// ------------------------------------------------------------------
+
 // TA PROCESS LOGIC
-// ------------------------------------------------------------------
+
 
 void ta_process(int ta_id, SharedData* shm_ptr) {
     srand(time(NULL) ^ getpid()); // Seed random number generator
@@ -219,9 +219,9 @@ void ta_process(int ta_id, SharedData* shm_ptr) {
     cout << "TA " << ta_id << " (PID: " << getpid() << ") is terminating." << endl;
 }
 
-// ------------------------------------------------------------------
+
 // MAIN PROGRAM - PARENT PROCESS
-// ------------------------------------------------------------------
+
 
 int main(int argc, char* argv[]) {
     if (argc != 2) {
